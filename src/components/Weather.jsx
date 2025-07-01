@@ -7,15 +7,19 @@ import {
   Divider,
   Typography,
 } from '@mui/material'
+import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
 import moment from 'moment'
 import 'moment/locale/ar'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useWialays } from '../context/WilayasContex'
 import { getWeather } from '../services/weatherService'
 
 export default function Weather() {
   const { t, i18n } = useTranslation()
+  const wialays = useWialays()
   const [weather, setWeather] = useState({
     temp: '',
     description: '',
@@ -25,15 +29,20 @@ export default function Weather() {
     iconUrl: '',
     dateAndTime: '',
   })
-
   const [lang, setLang] = useState('ar')
+  const [selectedWilaya, setSelectedWilaya] = useState(wialays[0])
 
   useEffect(() => {
     const controller = new AbortController()
     const signal = controller.signal
     i18n.changeLanguage(lang)
     const fetchWeather = async () => {
-      const data = await getWeather(signal, i18n.language)
+      const data = await getWeather(
+        signal,
+        i18n.language,
+        selectedWilaya.latitude,
+        selectedWilaya.longitude
+      )
 
       if (!data) return
 
@@ -54,7 +63,7 @@ export default function Weather() {
     return () => {
       controller.abort()
     }
-  }, [lang])
+  }, [lang, selectedWilaya])
 
   function handleLaguageClick() {
     setLang((prev) => (prev === 'ar' ? 'en' : 'ar'))
@@ -62,6 +71,42 @@ export default function Weather() {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+        <Autocomplete
+          id="country-select-demo"
+          sx={{ width: 300 }}
+          options={wialays}
+          autoHighlight
+          value={selectedWilaya}
+          getOptionLabel={(option) => t(option.name)}
+          renderOption={(props, option) => {
+            const { key, ...rest } = props
+            return (
+              <Box key={key} component="li" {...rest}>
+                {t(option.name)}
+              </Box>
+            )
+          }}
+          onChange={(event, newValue) => {
+            if (newValue) setSelectedWilaya(newValue)
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={t('choose_a_country')}
+              InputLabelProps={{
+                sx: { textAlign: 'center', width: '100%' },
+              }}
+              inputProps={{
+                ...params.inputProps,
+                style: { textAlign: 'center' },
+                autoComplete: 'new-password', // disable autocomplete and autofill
+              }}
+            />
+          )}
+        />
+      </Box>
+
       <Card
         sx={{
           minWidth: 500,

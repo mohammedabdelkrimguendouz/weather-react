@@ -1,6 +1,7 @@
 import { createTheme, ThemeProvider } from '@mui/material'
 import './App.css'
 import Weather from './components/Weather'
+import { WilayasProvider } from './context/WilayasContex'
 
 const theme = createTheme({
   typography: {
@@ -11,7 +12,9 @@ const theme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <Weather />
+      <WilayasProvider>
+        <Weather />
+      </WilayasProvider>
     </ThemeProvider>
   )
 }
