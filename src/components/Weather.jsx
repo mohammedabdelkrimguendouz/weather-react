@@ -9,60 +9,30 @@ import {
 } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
 import TextField from '@mui/material/TextField'
-import moment from 'moment'
 import 'moment/locale/ar'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useDispatch, useSelector } from 'react-redux'
 import { useWialays } from '../context/WilayasContex'
-import { getWeather } from '../services/weatherService'
+import { featchWeather } from '../features/weather/weatherApiSlice'
 
 export default function Weather() {
   const { t, i18n } = useTranslation()
+  const isLoading = useSelector((state) => state.weather.isLoading)
+  const weather = useSelector((state) => state.weather.weather)
+  const dispatch = useDispatch()
   const wialays = useWialays()
-  const [weather, setWeather] = useState({
-    temp: '',
-    description: '',
-    temp_min: '',
-    temp_max: '',
-    name: '',
-    iconUrl: '',
-    dateAndTime: '',
-  })
+
   const [lang, setLang] = useState('ar')
   const [selectedWilaya, setSelectedWilaya] = useState(wialays[0])
 
   useEffect(() => {
-    const controller = new AbortController()
-    const signal = controller.signal
     i18n.changeLanguage(lang)
-    const fetchWeather = async () => {
-      const data = await getWeather(
-        signal,
-        i18n.language,
-        selectedWilaya.latitude,
-        selectedWilaya.longitude
-      )
-
-      if (!data) return
-
-      const dateArabic = moment().format('L')
-
-      setWeather({
-        description: data.weather[0].description,
-        name: data.name,
-        temp: Math.round(data.main.temp),
-        temp_max: Math.round(data.main.temp_max),
-        temp_min: Math.round(data.main.temp_min),
-        iconUrl: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
-        dateAndTime: dateArabic,
-      })
-    }
-    fetchWeather()
-
-    return () => {
-      controller.abort()
-    }
+    dispatch(
+      featchWeather({lang, lat:selectedWilaya.latitude, lon:selectedWilaya.longitude})
+    )
   }, [lang, selectedWilaya])
 
   function handleLaguageClick() {
@@ -145,6 +115,8 @@ export default function Weather() {
           >
             <div>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                {isLoading ? <CircularProgress color="white" /> : ''}
+
                 <Typography variant="h1" sx={{ fontWeight: 'bold' }}>
                   {weather?.temp}
                 </Typography>
